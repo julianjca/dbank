@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { tokens, ether, ETHER_ADDRESS, EVM_REVERT, wait } from './helpers'
 
 const Token = artifacts.require('./Token')
