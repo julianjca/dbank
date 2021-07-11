@@ -15,6 +15,8 @@ const App = (props) =>  {
   const [dBank, setDBank] = useState(null)
   const [balance, setBalance] = useState(0)
   const [dBankAddress, setDBankAddress] = useState(null)
+  const [depositAmount, setDepositAmount] = useState(0)
+
 
   useEffect(() => {
     const load = async () => {
@@ -41,9 +43,10 @@ const loadBlockchainData = async (dispatch) => {
 
     try {
       // bank token
-      const dbankAddress = dBankToken.networks[netId].address
       const token = new web3.eth.Contract(Token.abi, Token.networks[netId].address)
       const dBankT = new web3.eth.Contract(dBankToken.abi, dBankToken.networks[netId].address)
+      const dbankAddress = dBankToken.networks[netId].address
+
       setToken(token)
       setDBank(dBankT)
       setDBankAddress(dbankAddress)
@@ -66,9 +69,14 @@ const loadBlockchainData = async (dispatch) => {
     //if MetaMask not exists push alert
   }
 
-  const deposit = (amount) => {
-    //check if this.state.dbank is ok
-      //in try block call dBank deposit();
+  const deposit = async (amount) => {
+    if (dBank !== 'undefined'){
+      try{
+        await dBank.methods.deposit().send({value: amount.toString(), from: account})
+      } catch (e) {
+        console.log('Error, deposit: ', e)
+      }
+    }
   }
 
   const withdraw = (e) => {
@@ -80,10 +88,7 @@ const loadBlockchainData = async (dispatch) => {
   const loginToMetaMask = async () => {
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     loadBlockchainData()
-
   }
-
-  console.log(account)
 
   return (
     <div className='text-monospace'>
@@ -101,15 +106,48 @@ const loadBlockchainData = async (dispatch) => {
       </nav>
       <div className="container-fluid mt-5 text-center">
       <br></br>
-        <h1>{/*add welcome msg*/}</h1>
-        <h2>{/*add user address*/}</h2>
+        <h1>Welcome to dBank</h1>
+        <h2>{account}</h2>
         <br></br>
         <div className="row">
           <main role="main" className="col-lg-12 d-flex text-center">
             <div className="content mr-auto ml-auto">
             <Tabs defaultActiveKey="profile" id="uncontrolled-tab-example">
-              {/*add Tab deposit*/}
-              {/*add Tab withdraw*/}
+              <Tab eventKey="deposit" title="Deposit">
+                <div>
+                  <br />
+                  How much do you want to deposit?
+                  <br />
+                  (min amount is 0.01 ETH)
+                  <br />
+                  (1 deposit is posible at a time)
+                  <form onSubmit={(e) => {
+                      e.preventDefault()
+                      let amount = depositAmount
+                      amount = amount * 10**18 //convert to wei
+                      deposit(amount)
+                    }}>
+                      <div className='form-group mr-sm-2'>
+                      <br></br>
+                        <input
+                          id='depositAmount'
+                          step="0.01"
+                          type='number'
+                          onChange={e => setDepositAmount(e.target.value)}
+                          className="form-control form-control-md"
+                          placeholder='amount...'
+                          required />
+                      </div>
+                      <button type='submit' className='btn btn-primary'>DEPOSIT</button>
+                    </form>
+                </div>
+              </Tab>
+              <Tab eventKey="withdraw" title="Withdraw">
+                <div>
+                  <br/>
+                  Do you want to withdraw + take interest?
+                </div>
+              </Tab>
             </Tabs>
             </div>
           </main>
